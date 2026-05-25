@@ -1,35 +1,25 @@
 """Ingest data from portwatch."""
 
-from duckdb import connect
 from httpx import get
-from pandas import DataFrame, concat, Series
-from tempfile import gettempdir
-from os import path
-from json import dumps
 from pathlib import Path
+from sys import path
 
 cf = Path(__file__)
-data_path = cf.parent.relative_to(cf.parents[3])  # data/ingest/portwatch
+relative_path = cf.parents[3]
+path.insert(0, str(relative_path))
+
+from data.ingest.utilities import lake_connection, write_temp  # noqa: E402
+
+cf = Path(__file__)
+data_path = cf.parent.relative_to(relative_path)  # data/ingest/portwatch
 table_name = cf.parent.name
 url = "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/PortWatch_ports_database/FeatureServer/0/query?outFields=*&where=1=1&f=geojson"
 
-def connection(data_path = data_path):
-    con = connect()
-    con.execute("INSTALL ducklake")
-    con.execute("LOAD ducklake")
-    con.execute("INSTALL sqlite")
-    con.execute("LOAD sqlite")
-    con.execute(f"ATTACH 'ducklake:sqlite:{data_path}/metadata/metadata.sqlite' AS lake (DATA_PATH '{data_path}/parquet/')")
-    con.execute("USE lake")
-    return con
-
 if __name__ == "__main__":
     r = get(url)
-    tmp = path.join(gettempdir(), "f{table_name}.json").replace("\\", "/")
-    with open(tmp, "w") as f:
-        f.write(dumps(r.json()["features"]))
+    tmp = write_temp(response=r, table_name=table_name, schema = "features")
 
-    conn = connection()
+    conn = lake_connection(data_path=data_path)
     data = conn.sql(
         f"""
         SELECT unnest(properties) 
