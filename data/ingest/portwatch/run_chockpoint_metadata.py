@@ -8,7 +8,7 @@ cf = Path(__file__)
 relative_path = cf.parents[3]
 path.insert(0, str(relative_path))
 
-from data.ingest.utilities import lake_connection, write_temp, create_table  # noqa: E402
+from data.ingest.utilities import lake_connection, write_temp, create_or_upsert_table  # noqa: E402
 
 cf = Path(__file__)
 data_path = cf.parent.relative_to(relative_path)  # data/ingest/portwatch
@@ -18,7 +18,29 @@ url = "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/ArcGIS/rest/services/PortWa
 SCHEMA = {
         "table": table_name,
         "columns": {
-            "bbox_geojson": "JSON",
+            "portid": "VARCHAR",
+            "portname": "VARCHAR",
+            "country": "VARCHAR",
+            "ISO3": "VARCHAR",
+            "continent": "VARCHAR",
+            "fullname": "VARCHAR",
+            "lat": "FLOAT",
+            "lon": "FLOAT",
+            "vessel_count_total": "FLOAT",
+            "vessel_count_container": "FLOAT",
+            "vessel_count_dry_bulk": "FLOAT",
+            "vessel_count_general_cargo": "FLOAT",
+            "vessel_count_RoRo": "FLOAT",
+            "vessel_count_tanker": "FLOAT",
+            "industry_top1": "VARCHAR",
+            "industry_top2": "VARCHAR",
+            "industry_top3": "VARCHAR",
+            "share_country_maritime_import": "FLOAT",
+            "LOCODE": "VARCHAR",
+            "pageid": "VARCHAR",
+            "countrynoaccents": "VARCHAR",
+            "ObjectId": "VARCHAR",
+            # "bbox_geojson": "JSON",
         }}
 
 if __name__ == "__main__":
@@ -35,4 +57,4 @@ if __name__ == "__main__":
                     
         """)
 
-    create_table(con=conn, schema=SCHEMA, data=data)
+    create_or_upsert_table(con=conn, schema=SCHEMA, data=data)
